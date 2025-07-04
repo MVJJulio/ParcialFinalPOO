@@ -7,6 +7,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 /*
   Parte A by Ana Ramirez
+Modificaciones Julio 
  */
 public class ServidorCuadrado {
     public static void main(String[] args) {
@@ -16,6 +17,9 @@ public class ServidorCuadrado {
                 
             while (true) {
                 Socket cliente = servidor.accept();
+                
+                if (cliente.isClosed()) break;
+                
                 Thread hilo = new Thread(new ManejadorCliente(cliente));
                 hilo.start();
             }

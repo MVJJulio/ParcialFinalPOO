@@ -9,37 +9,61 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 /*
   Parte A by Ana Ramirez
  */
 public class ManejadorCliente implements Runnable{
-private Socket socketCliente;
+   private Socket socket;
+   private static boolean servidorActivo = true;
+    public ManejadorCliente(Socket socket) {
+        this.socket = socket;
+    }
 
+    public static boolean servidorSigueActivo() {
+    return servidorActivo;
+}
 
-        public ManejadorCliente(Socket socketCliente){
-        this.socketCliente = socketCliente;
-       }
-   
+    public static void apagarServidor() {
+    servidorActivo = false;
+}
 
-    @Override
+   @Override
     public void run() {
-        try (
-            BufferedReader reader = new BufferedReader(new InputStreamReader(socketCliente.getInputStream()));
-            PrintWriter writer = new PrintWriter(socketCliente.getOutputStream(), true);
-        ) {
-            String nombreCliente = reader.readLine();
-            System.out.println("Mensaje del cliente: " + nombreCliente);
+        String nombre = ""; 
 
-            writer.println("Hola " + nombreCliente);
-        } catch (IOException e) {
-            System.out.println("Error con cliente: " + e.getMessage());
-        } finally {
-            try {
-                socketCliente.close();
-            } catch (IOException e) {
-                System.out.println("No se pudo cerrar la conexion: " + e.getMessage());
+
+        try (
+            BufferedReader entrada = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            PrintWriter salida = new PrintWriter(socket.getOutputStream(), true);
+        ) {
+            nombre = entrada.readLine(); 
+            
+             if ("SALIR".equalsIgnoreCase(nombre)) {
+                System.out.println("Solicitud de apagado recibida.");
+                salida.println("El servidor se apagará...");
+                apagarServidor();
+                return; // salimos del hilo
             }
+             
+            int numero = Integer.parseInt(entrada.readLine());
+
+            System.out.println("Cliente " + nombre + " conectado");
+
+            int cuadrado = numero * numero;
+            String fechaHora = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+
+            salida.println("¡Bienvenido, " + nombre + "!");
+            salida.println("El cuadrado de tu número es: " + cuadrado);
+            salida.println("Fecha y hora del servidor: " + fechaHora);
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            System.out.println("Cliente " + nombre + " desconectado");
+            try { socket.close(); } catch (IOException e) { e.printStackTrace(); }
         }
     }
     }
